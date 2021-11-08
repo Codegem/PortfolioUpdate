@@ -41,6 +41,19 @@ class UserResponse {
 
 @Resolver()
 export class  UserResolver {
+    @Query(() => User, {nullable: true})
+    async me(
+        @Ctx() {req, em}: MyContext
+    ){
+        console.log(req.session)
+        if(!req.session.userId){
+            return null
+        }
+
+        const user = await em.findOne(User, {id: req.session.userId});
+        return user;
+    }
+
     @Query(() => [User])
     users(
         @Ctx() {em}: MyContext
@@ -51,7 +64,7 @@ export class  UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options: UserInput,
-        @Ctx() {em}: MyContext
+        @Ctx() {em, req}: MyContext
     ): Promise<UserResponse>{
         if(options.username.length <= 3){
             return{
@@ -83,13 +96,16 @@ export class  UserResolver {
                 }
             }
         }
+        // store user session
+        req.session.userId = user.id;
+
         return {user};
     }
 
     @Mutation(() => UserResponse)
     async login(
         @Arg('options') options: UserInput,
-        @Ctx() {em}: MyContext
+        @Ctx() {em, req}: MyContext
     ): Promise<UserResponse> {
         const user = await em.findOne(User, {username: options.username});
         
@@ -111,6 +127,9 @@ export class  UserResolver {
                 }]
             }
         }
+
+        req.session.userId = user.id;
+
 
         return {
             user,
