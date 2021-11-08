@@ -4,8 +4,9 @@ import mikroOrmConfig from './mikro-orm.config';
 import express from 'express'
 import {ApolloServer} from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
-import { HelloResolver } from './graphql/resolvers/hello';
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
+import { ProjectResolver } from './graphql/resolvers/Project';
+import { UserResolver } from './graphql/resolvers/User';
 
 const main = async () => {
     const orm = await MikroORM.init(mikroOrmConfig);
@@ -15,9 +16,10 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver],
+            resolvers: [ProjectResolver, UserResolver],
             validate: false,
         }),
+        context: () => ({em: orm.em}),
         plugins: [
             ApolloServerPluginLandingPageGraphQLPlayground
         ]
@@ -28,7 +30,7 @@ const main = async () => {
     apolloServer.applyMiddleware({app});
 
     app.listen(4000, () => {
-        console.log('🚀 Server is running on http://localhost:4000/graphql')
+        console.log('\x1b[35m', '🚀 Server is running on http://localhost:4000/graphql', '\x1b[33m');
     })
 }
 main().catch((error) => {console.error(error)});
